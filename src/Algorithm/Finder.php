@@ -6,55 +6,81 @@ namespace CodelyTV\FinderKata\Algorithm;
 
 final class Finder
 {
-    /** @var Thing[] */
-    private $_p;
+    /** @var Person[] */
+    private $_persons;
 
-    public function __construct(array $p)
+    public function __construct(array $persons)
     {
-        $this->_p = $p;
+        $this->_persons = $persons;
     }
 
-    public function find(int $ft): F
+    /**
+     * @param int $finderType
+     * @return PersonsAgeDifferent
+     */
+    public function find(int $finderType): PersonsAgeDifferent
     {
-        /** @var F[] $tr */
-        $tr = [];
+        $personsAgeDifferences = $this->definePersonsAgeDifferent();
 
-        for ($i = 0; $i < count($this->_p); $i++) {
-            for ($j = $i + 1; $j < count($this->_p); $j++) {
-                $r = new F();
+        if (count($personsAgeDifferences) < 1) {
+            return new PersonsAgeDifferent();
+        }
 
-                if ($this->_p[$i]->birthDate < $this->_p[$j]->birthDate) {
-                    $r->p1 = $this->_p[$i];
-                    $r->p2 = $this->_p[$j];
+        $answer = $this->searchPersonsAgeDifferentByFinderType($finderType, $personsAgeDifferences);
+
+        return $answer;
+    }
+
+    /**
+     * @return array
+     */
+    public function definePersonsAgeDifferent()
+    {
+        $personsAgeDifferences = [];
+
+        for ($i = 0; $i < count($this->_persons); $i++) {
+            for ($j = $i + 1; $j < count($this->_persons); $j++) {
+                $personsAgeDifferent = new PersonsAgeDifferent();
+
+                if ($this->_persons[$i]->birthDate < $this->_persons[$j]->birthDate) {
+                    $personsAgeDifferent->person1 = $this->_persons[$i];
+                    $personsAgeDifferent->person2 = $this->_persons[$j];
                 } else {
-                    $r->p1 = $this->_p[$j];
-                    $r->p2 = $this->_p[$i];
+                    $personsAgeDifferent->person1 = $this->_persons[$j];
+                    $personsAgeDifferent->person2 = $this->_persons[$i];
                 }
 
-                $r->d = $r->p2->birthDate->getTimestamp()
-                    - $r->p1->birthDate->getTimestamp();
+                $personsAgeDifferent->ageDifferent =
+                    $personsAgeDifferent->person2->birthDate->getTimestamp() - $personsAgeDifferent->person1->birthDate->getTimestamp();
 
-                $tr[] = $r;
+                $personsAgeDifferences[] = $personsAgeDifferent;
             }
         }
 
-        if (count($tr) < 1) {
-            return new F();
-        }
+        return $personsAgeDifferences;
 
-        $answer = $tr[0];
+    }
 
-        foreach ($tr as $result) {
-            switch ($ft) {
-                case FT::ONE:
-                    if ($result->d < $answer->d) {
-                        $answer = $result;
+    /**
+     * @param int $finderType
+     * @param $personsAgeDifferences
+     * @return mixed
+     */
+    public function searchPersonsAgeDifferentByFinderType(int $finderType, $personsAgeDifferences)
+    {
+        $answer = $personsAgeDifferences[0];
+
+        foreach ($personsAgeDifferences as $item) {
+            switch ($finderType) {
+                case FinderType::CLOSEST:
+                    if ($item->ageDifferent < $answer->ageDifferent) {
+                        $answer = $item;
                     }
                     break;
 
-                case FT::TWO:
-                    if ($result->d > $answer->d) {
-                        $answer = $result;
+                case FinderType::FURTHEST:
+                    if ($item->ageDifferent > $answer->ageDifferent) {
+                        $answer = $item;
                     }
                     break;
             }
